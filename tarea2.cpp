@@ -6,6 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <stb_image.h>
+#include <shader_s.h>
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
@@ -13,43 +15,6 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"uniform mat4 transform;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = transform * vec4(aPos, 1.0f);\n"
-"}\0";
-const char* vertexShaderSource2 = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in vec3 aColor;\n"
-"layout (location = 2) in vec2 aTexCoord;\n"
-"out vrc2 TexCoord;\n"
-"out vec3 ourColor;\n"
-"uniform mat4 transform;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = transform * vec4(aPos, 1.0f);\n"
-"   ourColor = aColor;\n"
-"   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
-"}\0";
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"uniform vec4 ourColor; \n"
-"void main()\n"
-"{\n"
-"   FragColor = ourColor;\n"
-"}\n\0";
-
-const char* fragmentShaderSource2 = "#version 330 core\n"
-"in vec3 ourColor;\n"
-"in vrc2 TexCoord;\n"
-"out vec4 FragColor;\n"
-"uniform sampler2D texture1; \n"
-"void main()\n"
-"{\n"
-"   FragColor = texture(texture1, TexCoord);\n"
-"}\n\0";
 
 int main()
 {
@@ -83,71 +48,10 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
-
     // build and compile our shader program
-    // ------------------------------------
-    // vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    unsigned int vertexShaderTexture = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShaderTexture, 1, &vertexShaderSource2, NULL);
-    glCompileShader(vertexShaderTexture);
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    glGetShaderiv(vertexShaderTexture, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShaderTexture, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    unsigned int fragmentShaderTexture = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShaderTexture, 1, &fragmentShaderSource2, NULL);
-    glCompileShader(fragmentShaderTexture);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShaderTexture, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShaderTexture, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    unsigned int shaderProgramTexture = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glAttachShader(shaderProgramTexture, vertexShaderTexture);
-    glAttachShader(shaderProgramTexture, fragmentShaderTexture);
-    glLinkProgram(shaderProgramTexture);
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader ShaderTexture("4.1.texture.vs", "4.1.texture.fs");
+    Shader ShaderNormal("shaderNormal.vs", "shaderNormal.fs");
+    
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -181,7 +85,7 @@ int main()
         0.0f, 0.7f, 0.0f,//O 14
         0.6f, 0.0f, 0.0f,//P 15
         0.0f, 0.6f, 0.0f,//Q 16
-        
+
     };
 
     unsigned int indices[] = {  // note that we start from 0!
@@ -204,12 +108,12 @@ int main()
         vertices_circle[j * 3 + 1] = 0.2f + (0.16 * sin(j * 3.1416 * 2 / 49));
         vertices_circle[j * 3 + 2] = 0.0f;
     };
-    
+
     for (int k = 0; k < 49; k++)
     {
         indices_circle[3 * k] = 0;
-        indices_circle[3 * k+1] = k+1;
-        indices_circle[3 * k+2] = k+2;
+        indices_circle[3 * k + 1] = k + 1;
+        indices_circle[3 * k + 2] = k + 2;
     }
     indices_circle[144] = 0;
     indices_circle[145] = 49;
@@ -217,7 +121,7 @@ int main()
 
     float vertices_ellipse1[150];
     float vertices_ellipse2[150];
-    float x, y,pi;
+    float x, y, pi;
     pi = 3.1416;
     vertices_ellipse1[0] = 0.45f;
     vertices_ellipse1[1] = 0.0f;
@@ -238,7 +142,7 @@ int main()
         vertices_ellipse2[j * 3 + 2] = 0.0f;
     };
 
-    unsigned int VAO[5],VBO[5],EBO[5];
+    unsigned int VAO[5], VBO[5], EBO[5];
     glGenVertexArrays(1, &VAO[1]);
     glGenBuffers(1, &VBO[1]);
     glGenBuffers(1, &EBO[1]);
@@ -325,24 +229,24 @@ int main()
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
         // set the texture wrapping parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set  texture wrapping to GL_REPEAT(default wrapping method)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set  texture wrapping to GL_REPEAT(default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:/Graficas/OpenGL/images/textura1.jpg", &width, &height, &nrChannels, 0);
-            if (data)
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                    GL_UNSIGNED_BYTE, data);
-                glGenerateMipmap(GL_TEXTURE_2D);
-            }
-            else
-            {
-                std::cout << "Failed to load texture" << std::endl;
-            }
+    unsigned char* data = stbi_load("C:/Graficas/OpenGL/images/textura1.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+            GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
     stbi_image_free(data);    glBindVertexArray(0);
 
     // uncomment this call to draw in wireframe polygons.
@@ -361,14 +265,14 @@ int main()
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(shaderProgramTexture);
+        ShaderTexture.use();
         glBindVertexArray(VAO[0]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glUseProgram(shaderProgram);
+        ShaderNormal.use();
         glBindVertexArray(VAO[1]); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform"); 
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        unsigned int transformLoc = glGetUniformLocation(ShaderNormal.ID, "transform");
+        int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
         //Pintamos un cuadrante y lo rotamos para que se repita en los 4
         for (size_t i = 0; i < 4; i++)
         {
@@ -410,7 +314,7 @@ int main()
             transform = glm::mat4(1.0f);
         };
 
-        
+
         glBindVertexArray(VAO[2]);
         for (size_t l = 0; l < 4; l++)
         {
@@ -445,7 +349,9 @@ int main()
     glDeleteVertexArrays(1, &VAO[2]);
     glDeleteBuffers(1, &VBO[2]);
     glDeleteBuffers(1, &EBO[2]);
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(ShaderNormal.ID);
+    glDeleteProgram(ShaderTexture.ID);
+
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

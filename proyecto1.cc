@@ -57,43 +57,39 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    float verticesBlack[] = {
+    float verticesBg[] = {
         0.5f, 1.0f, 0.0f, //0
         1.0f, 1.0f, 0.0f,
         1.0f, 0.5f, 0.0f, //2
         0.7f, 0.7f, 0.0f, //3
         0.7f, 0.0f, 0.0f, //4
         0.0f, 0.0f, 0.0f, //5
-        0.0f, 0.7f, 0.0f, //6
+        0.0f, 0.7f, 0.0f,//6
+        0.6f, 0.6f, 0.0f,//7
+        0.6f, 0.0f, 0.0f,//8  
+        0.0f, 0.6f, 0.0f,//9
+        0.5f, 0.5f, 0.0f,//10
+        0.5f, 0.0f, 0.0f,//11
+        0.0f, 0.5f, 0.0f,//12
     };
-    unsigned int indicesBlack[] = {  // note that we start from 0!
+    unsigned int indicesBg[] = {  // note that we start from 0!
         0, 1, 2,
         3, 4, 5,
-        3, 5, 6
+        3, 5, 6,
+        5, 7, 8,
+        5, 7, 9,
+        5, 10, 11,
+        5, 10, 12,
     };
 
-    float verticesWhite[] = {
-        0.6f, 0.6f, 0.0f, //0
-        0.6f, 0.0f, 0.0f, //1
-        0.0f, 0.0f, 0.0f, //2
-        0.0f, 0.6f, 0.0f, //3
+    float verticesSpikes[] = {
+        0.0f, 0.17f, 0.0f, //0
+        0.17f, 0.0f, 0.0f, //1
+        0.3f, 0.3f, 0.0f,
     };
-    unsigned int indicesWhite[] = {  // note that we start from 0!
-        0, 1, 2,
-        0, 2, 3
+    unsigned int indicesSpikes[] = {  // note that we start from 0!
+        0, 1, 2
     };
-
-    float verticesYellow[] = {
-        0.5f, 0.5f, 0.0f, //0
-        0.5f, 0.0f, 0.0f, //1
-        0.0f, 0.0f, 0.0f, //2
-        0.0f, 0.5f, 0.0f, //3
-    };
-    unsigned int indicesYellow[] = {  // note that we start from 0!
-        0, 1, 2,
-        0, 2, 3
-    };
-
 
     float vertices_circleBlack[150];
     unsigned int indices_circleBlack[147];
@@ -111,8 +107,8 @@ int main()
     create_circle(vertices_circleBlack, indices_circleBlack, 0.50, 0.6, 0.0);
     create_circle(vertices_circleWhite, indices_circleWhite, 0.38, 0.6, 0.0);
     create_circle(vertices_circleYellow, indices_circleYellow, 0.26, 0.6, 0.0);
-    create_circle(vertices_circleBlueIn, indices_circleBlueIn, 0.15, 0.0, 0.0);
-    create_circle(vertices_circleBlueOut, indices_circleBlueOut, 0.2, 0.0, 0.0);
+    create_circle(vertices_circleBlueIn, indices_circleBlueIn, 0.2, 0.0, 0.0);
+    create_circle(vertices_circleBlueOut, indices_circleBlueOut, 0.25, 0.0, 0.0);
     create_circle(vertices_red, indices_red, 0.07, 0.56, 0.13);
 
     float vertices_red_tail[] = {
@@ -200,16 +196,6 @@ int main()
     indices_red_tail[0] = 69;
     indices_red_tail[1] = 70;
     indices_red_tail[2] = 71;
-    /*create_buffers(VAO[0], VBO[0], EBO[0],vertices_circleWhite,indices_circleWhite );
-    create_buffers(VAO[1], VBO[1], EBO[1], verticesBlack, indicesBlack);
-    create_buffers(VAO[2], VBO[2], EBO[2], verticesWhite, indicesWhite);
-    create_buffers(VAO[3], VBO[3], EBO[3], verticesYellow, indicesYellow);
-    create_buffers(VAO[4], VBO[4], EBO[4], vertices_circleBlack, indices_circleBlack);
-    create_buffers(VAO[5], VBO[5], EBO[5], vertices_circleYellow, indices_circleYellow);
-    create_buffers(VAO[6], VBO[6], EBO[6], vertices_circleBlueOut, indices_circleBlueOut);
-    create_buffers(VAO[7], VBO[7], EBO[7], vertices_circleBlueIn, indices_circleBlueIn);
-    create_buffers(VAO[8], VBO[8], EBO[8], vertices_red, indices_red);
-    create_buffers(VAO[9], VBO[9], EBO[9], vertices_red_tail, indices_red_tail);*/
 
     glGenVertexArrays(1, &VAO[1]);
     glGenBuffers(1, &VBO[1]);
@@ -218,10 +204,10 @@ int main()
     glBindVertexArray(VAO[1]);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesBlack), verticesBlack, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesBg), verticesBg, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesBlack), indicesBlack, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesBg), indicesBg, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -236,31 +222,6 @@ int main()
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
     //We repeat this for each buffer
-    glGenVertexArrays(1, &VAO[2]);
-    glGenBuffers(1, &VBO[2]);
-    glGenBuffers(1, &EBO[2]);
-    glBindVertexArray(VAO[2]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesWhite), verticesWhite, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[2]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesWhite), indicesWhite, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    glGenVertexArrays(1, &VAO[3]);
-    glGenBuffers(1, &VBO[3]);
-    glGenBuffers(1, &EBO[3]);
-    glBindVertexArray(VAO[3]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesYellow), verticesYellow, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[3]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesYellow), indicesYellow, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     glGenVertexArrays(1, &VAO[4]);
     glGenBuffers(1, &VBO[4]);
@@ -353,6 +314,19 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    glGenVertexArrays(1, &VAO[10]);
+    glGenBuffers(1, &VBO[10]);
+    glGenBuffers(1, &EBO[10]);
+    glBindVertexArray(VAO[10]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[10]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesSpikes), verticesSpikes, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[10]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesSpikes), indicesSpikes, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -371,12 +345,7 @@ int main()
         // ------
         drawBackground(ShaderNormal, VAO);
         int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
-        glBindVertexArray(VAO[6]);
-        glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(VAO[7]);
-        glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        
 
         float angle;
         glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
@@ -389,6 +358,9 @@ int main()
             glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
             glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(VAO[10]);
+            glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
             glBindVertexArray(VAO[8]);
             glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
@@ -402,6 +374,12 @@ int main()
             glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
             transform = glm::mat4(1.0f);//regresamos a la matriz identidad
         };
+        glBindVertexArray(VAO[6]);
+        glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(VAO[7]);
+        glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
 
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -515,10 +493,10 @@ void drawBackground(Shader shader, unsigned int VAO[]) {
     {
         angle = 90.0 * (float)i;
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-        glBindVertexArray(VAO[2]);
+        glBindVertexArray(VAO[1]);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(9 * sizeof(unsigned int)));
     };
     for (size_t i = 0; i < 4; i++)
     {
@@ -534,10 +512,10 @@ void drawBackground(Shader shader, unsigned int VAO[]) {
     {
         angle = 90.0 * (float)i;
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-        glBindVertexArray(VAO[3]);
+        glBindVertexArray(VAO[1]);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glUniform4f(vertexColorLocation, 0.82f, 0.69f, 0.63f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(15 * sizeof(unsigned int)));
     };
 
 }

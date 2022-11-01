@@ -14,7 +14,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void create_buffers(unsigned int vao, unsigned int vbo, unsigned int ebo, float vertices[], unsigned int indices[]);
 void create_circle(float ver[], unsigned int ind[], float r, float x, float y);
-void drawBackground(Shader shader, unsigned int VAO[]);
+void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
+void drawPlants(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
+void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -332,6 +334,8 @@ int main()
     // render loop
     // ----------
     ShaderNormal.use();
+    int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
+    unsigned int transformLoc = glGetUniformLocation(ShaderNormal.ID, "transform");
     struct timeb start, end;
     unsigned short elapse = 0, t1, t2;
     float inc = 0;
@@ -350,13 +354,13 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
             // render
             // ------
-            drawBackground(ShaderNormal, VAO);
-            int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
+            drawBackground(vertexColorLocation,transformLoc, VAO);
+            
 
 
             float angle;
             glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-            unsigned int transformLoc = glGetUniformLocation(ShaderNormal.ID, "transform");
+            
             for (size_t i = 0; i < 4; i++)
             {
                 angle = 90.0 * (float)i;
@@ -433,15 +437,15 @@ void create_buffers(unsigned int vao, unsigned int vbo, unsigned int ebo, float 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+glBindVertexArray(vao);
+glBindBuffer(GL_ARRAY_BUFFER, vbo);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);
+glBindBuffer(GL_ARRAY_BUFFER, 0);
+glBindVertexArray(0);
 }
 void create_circle(float ver[], unsigned int ind[], float r, float x, float y) {
     ver[0] = x;
@@ -464,12 +468,10 @@ void create_circle(float ver[], unsigned int ind[], float r, float x, float y) {
     ind[146] = 1;
 }
 
-void drawBackground(Shader shader, unsigned int VAO[]) {
+void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]) {
     float angle;
     glBindVertexArray(VAO[2]); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
     glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    unsigned int transformLoc = glGetUniformLocation(shader.ID, "transform");
-    int vertexColorLocation = glGetUniformLocation(shader.ID, "ourColor");
     for (size_t i = 0; i < 4; i++)
     {
         angle = 90.0 * (float)i;
@@ -527,5 +529,51 @@ void drawBackground(Shader shader, unsigned int VAO[]) {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(15 * sizeof(unsigned int)));
     };
 
+
 }
+
+void drawPlants(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]) {
+    float angle;
+    glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        angle = 90.0 * (float)i;
+        transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        glBindVertexArray(VAO[7]);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+        glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], 1.0f);
+        glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(VAO[6]);
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
+        glBindVertexArray(VAO[7]);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+        glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(VAO[6]);
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        transform = glm::mat4(1.0f);//regresamos a la matriz identidad
+    };
+}
+
+void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]) {
+    float angle;
+    glm::mat4 transform = glm::mat4(1.0f);
+    for (size_t i = 0; i < 4; i++)
+    {
+        angle = 90.0 * (float)i;
+        transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        glBindVertexArray(VAO[8]);
+        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        
+    };
+    glBindVertexArray(VAO[4]);
+    glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(VAO[5]);
+    glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+}
+
 

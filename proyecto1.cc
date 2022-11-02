@@ -12,12 +12,11 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void create_buffers(unsigned int vao, unsigned int vbo, unsigned int ebo, float vertices[], unsigned int indices[]);
 void create_circle(float ver[], unsigned int ind[], float r, float x, float y);
 void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
-void drawPlants(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
+void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state, float inc);
 void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
-
+void drawWood(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -334,13 +333,21 @@ int main()
     // render loop
     // ----------
     ShaderNormal.use();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
     int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
     unsigned int transformLoc = glGetUniformLocation(ShaderNormal.ID, "transform");
     struct timeb start, end;
     unsigned short elapse = 0, t1, t2;
     float inc = 0;
+    int state = 0;
     ftime(&start);
     t1 = start.millitm;
+    float color_hoja[] = {
+        0.0f,1.0f,0.0f,1.0f,
+    };
+    glm::mat4 trans = glm::mat4(1.0f);
+  
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
@@ -349,71 +356,47 @@ int main()
         elapse = t2 - t1;
         if (elapse > 1) {
             t1 = t2;
-
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            inc = inc + 0.1; //cada que el incremento sube 50 son 8 segundos
+            glClearColor(1.0f, 0.898f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // render
             // ------
-            drawBackground(vertexColorLocation,transformLoc, VAO);
-            
-
-
-            float angle;
-            glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-            
-            for (size_t i = 0; i < 4; i++)
-            {
-                angle = 90.0 * (float)i;
-                transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-                glBindVertexArray(VAO[7]);
-                glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
-                glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-                glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
-                glBindVertexArray(VAO[8]);
-                glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-                glBindVertexArray(VAO[6]);
-                glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-                glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-                transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
-                glBindVertexArray(VAO[7]);
-                glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
-                glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-                glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
-                glBindVertexArray(VAO[6]);
-                glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-                glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-                transform = glm::mat4(1.0f);//regresamos a la matriz identidad
-            };
-            glBindVertexArray(VAO[4]);
-            glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
-            glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-            glBindVertexArray(VAO[5]);
-            glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
-            glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-
+            if (inc < 33) { 
+                color_hoja[0] = color_hoja[0] + 0.003;
+            }
+            else if (inc <66){
+                color_hoja[1] = color_hoja[1] - 0.003;
+            }
+            else if (inc<100){
+                state = 1;
+                color_hoja[3] = color_hoja[3] - 0.003;
+            }
+            drawBackground(vertexColorLocation, transformLoc, VAO);
+            drawCircles(vertexColorLocation, transformLoc, VAO, color_hoja);
+            drawWood(vertexColorLocation, transformLoc, VAO);
+            drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja,state,inc);
             // -------------------------------------------------------------------------------
             glfwSwapBuffers(window);
 
         }
         glfwPollEvents();
     }
-        // optional: de-allocate all resources once they've outlived their purpose:
-        // ------------------------------------------------------------------------
-        glDeleteVertexArrays(1, &VAO[1]);
-        glDeleteBuffers(1, &VBO[1]);
-        glDeleteBuffers(1, &EBO[1]);
-        glDeleteVertexArrays(1, &VAO[2]);
-        glDeleteBuffers(1, &VBO[2]);
-        glDeleteBuffers(1, &EBO[2]);
-        glDeleteProgram(ShaderNormal.ID);
+    // optional: de-allocate all resources once they've outlived their purpose:
+    // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &VAO[1]);
+    glDeleteBuffers(1, &VBO[1]);
+    glDeleteBuffers(1, &EBO[1]);
+    glDeleteVertexArrays(1, &VAO[2]);
+    glDeleteBuffers(1, &VBO[2]);
+    glDeleteBuffers(1, &EBO[2]);
+    glDeleteProgram(ShaderNormal.ID);
 
 
-        // glfw: terminate, clearing all previously allocated GLFW resources.
-        // ------------------------------------------------------------------
-        glfwTerminate();
-        return 0;
-    
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
+    return 0;
+
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -433,20 +416,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void create_buffers(unsigned int vao, unsigned int vbo, unsigned int ebo, float vertices[], unsigned int indices[]) {
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
-glBindVertexArray(vao);
-glBindBuffer(GL_ARRAY_BUFFER, vbo);
-glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-glEnableVertexAttribArray(0);
-glBindBuffer(GL_ARRAY_BUFFER, 0);
-glBindVertexArray(0);
-}
 void create_circle(float ver[], unsigned int ind[], float r, float x, float y) {
     ver[0] = x;
     ver[1] = y;
@@ -532,27 +501,53 @@ void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned
 
 }
 
-void drawPlants(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]) {
+void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state, float inc) {
     float angle;
     glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    glBindVertexArray(VAO[6]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    for (size_t i = 0; i < 4; i++)
+    {
+        if (state == 1) {
+            switch (i)
+            {
+            case 0:
+                transform = glm::translate(transform, glm::vec3(inc / 1000, 0.0f, 0.0f));
+            case 1:
+                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            case 2:
+                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            case 3:
+                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            default:
+                break;
+            }
+        }
+        angle = 90.0 * (float)i;
+        transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        transform = glm::mat4(1.0f);
+    };
+}
 
+void drawWood(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]) {
+    float angle;
+    glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    glBindVertexArray(VAO[7]);
     for (size_t i = 0; i < 4; i++)
     {
         angle = 90.0 * (float)i;
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-        glBindVertexArray(VAO[7]);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
-        glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], 1.0f);
+        glUniform4f(vertexColorLocation, 0.525, 0.16, 0.047, 1.0f);//color cafe 
         glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(VAO[6]);
-        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
         transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
-        glBindVertexArray(VAO[7]);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(VAO[6]);
-        glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-        transform = glm::mat4(1.0f);//regresamos a la matriz identidad
     };
 }
 
@@ -563,10 +558,11 @@ void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned in
     {
         angle = 90.0 * (float)i;
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glBindVertexArray(VAO[8]);
         glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-        
+
     };
     glBindVertexArray(VAO[4]);
     glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
@@ -575,5 +571,4 @@ void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned in
     glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
     glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
 }
-
 

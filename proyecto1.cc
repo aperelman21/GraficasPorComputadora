@@ -17,10 +17,11 @@ void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned
 void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state, float inc);
 void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
 void drawWood(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
-// settings
+void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc);// settings
+void getWater(int vertexColorLocation, unsigned int VAO[], float colores[]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
-unsigned int VAO[11], VBO[11], EBO[11];
+unsigned int VAO[10], VBO[10], EBO[10];
 
 int main()
 {
@@ -56,14 +57,25 @@ int main()
     }
     // build and compile our shader program
     Shader ShaderNormal("shaderNormal.vs", "shaderNormal.fs");
+    Shader ShaderTexture("4.1.texture.vs", "4.1.texture.fs");
+    float verticesTexture[] = {
+        // positions          // colors           // texture coords
+         1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+         1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+        -1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+        -1.0f,  1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
 
-
+    };
+    unsigned int indicesTexture[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float verticesBg[] = {
-        0.5f, 1.0f, 0.0f, //0
-        1.0f, 1.0f, 0.0f,
-        1.0f, 0.5f, 0.0f, //2
+        0.0f, 0.0f, 0.0f, //0
+        1.5f, 0.0f, 0.0f,
+        0.0f, 1.5f, 0.0f, //2
         0.7f, 0.7f, 0.0f, //3
         0.7f, 0.0f, 0.0f, //4
         0.0f, 0.0f, 0.0f, //5
@@ -74,6 +86,8 @@ int main()
         0.5f, 0.5f, 0.0f,//10
         0.5f, 0.0f, 0.0f,//11
         0.0f, 0.5f, 0.0f,//12
+        0.66f,0.7f,0.0f,
+        0.7f,0.66f,0.0f
     };
     unsigned int indicesBg[] = {  // note that we start from 0!
         0, 1, 2,
@@ -83,15 +97,31 @@ int main()
         5, 7, 9,
         5, 10, 11,
         5, 10, 12,
+        3,13,14,
     };
 
     float verticesSpikes[] = {
         0.0f, 0.17f, 0.0f, //0
         0.17f, 0.0f, 0.0f, //1
         0.3f, 0.3f, 0.0f,
+
+        0.0f, -0.17f, 0.0f, //3
+        0.17f, 0.0f, 0.0f, //4
+        0.3f, -0.3f, 0.0f,
+
+        0.0f, -0.17f, 0.0f, //6
+        -0.17f, 0.0f, 0.0f, //7
+        -0.3f, -0.3f, 0.0f,
+
+        0.0f, 0.17f, 0.0f, //9
+        -0.17f, 0.0f, 0.0f, //10
+        -0.3f, 0.3f, 0.0f,
     };
     unsigned int indicesSpikes[] = {  // note that we start from 0!
-        0, 1, 2
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8,
+        9, 10, 11
     };
 
     float vertices_circleBlack[150];
@@ -330,9 +360,52 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    glGenVertexArrays(1, &VAO[9]);
+    glGenBuffers(1, &VBO[9]);
+    glGenBuffers(1, &EBO[9]);
+    glBindVertexArray(VAO[9]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[9]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesTexture), verticesTexture, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[9]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesTexture), indicesTexture, GL_STATIC_DRAW);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    // load and create a texture 
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+        // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set  texture wrapping to GL_REPEAT(default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("C:/Graficas/OpenGL/images/water.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+            GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);    glBindVertexArray(0);
+
+
     // render loop
     // ----------
-    ShaderNormal.use();
+    
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
@@ -346,11 +419,14 @@ int main()
     float color_hoja[] = {
         0.0f,1.0f,0.0f,1.0f,
     };
+    float color_agua[] = {
+        1.0f,1.0f,1.0f,1.0f,
+    };
     glm::mat4 trans = glm::mat4(1.0f);
   
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
-
+        
         ftime(&end);
         t2 = end.millitm;
         elapse = t2 - t1;
@@ -359,22 +435,33 @@ int main()
             inc = inc + 0.1; //cada que el incremento sube 50 son 8 segundos
             glClearColor(1.0f, 0.898f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
+            ShaderTexture.use();
+            glBindVertexArray(VAO[9]);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            ShaderNormal.use();
             // render
             // ------
-            if (inc < 33) { 
+            if (inc < 33) { //33
                 color_hoja[0] = color_hoja[0] + 0.003;
+                color_agua[2] = color_agua[2] - 0.003;
             }
-            else if (inc <66){
+            else if (inc <66){//66
                 color_hoja[1] = color_hoja[1] - 0.003;
             }
             else if (inc<100){
                 state = 1;
                 color_hoja[3] = color_hoja[3] - 0.003;
             }
+            else if (inc < 150) {
+                state = 2;
+                color_hoja[3] = 1.0f;
+            }
+
             drawBackground(vertexColorLocation, transformLoc, VAO);
-            drawCircles(vertexColorLocation, transformLoc, VAO, color_hoja);
+            drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
             drawWood(vertexColorLocation, transformLoc, VAO);
             drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja,state,inc);
+            //getWater(vertexColorLocation, VAO, color_agua);
             // -------------------------------------------------------------------------------
             glfwSwapBuffers(window);
 
@@ -447,8 +534,12 @@ void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
         glBindVertexArray(VAO[1]);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+        glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(3 * sizeof(unsigned int)));
+        glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(21 * sizeof(unsigned int)));
     };
     for (size_t i = 0; i < 4; i++)
     {
@@ -508,29 +599,109 @@ void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int 
     glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
     for (size_t i = 0; i < 4; i++)
     {
-        if (state == 1) {
-            switch (i)
-            {
-            case 0:
-                transform = glm::translate(transform, glm::vec3(inc / 1000, 0.0f, 0.0f));
-            case 1:
-                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
-            case 2:
-                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
-            case 3:
-                transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f));
-            default:
-                break;
-            }
-        }
+        transform = glm::mat4(1.0f);
         angle = 90.0 * (float)i;
+        switch (i)
+        {
+        case 0:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((inc / 500) - 0.1, 0.0f, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(0.56f,0.07f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(-0.56f, -0.07f, 0.0f));
+            }
+            break;
+        case 1:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 500) - 0.1, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(-0.07f, 0.56f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(0.07f, -0.56f, 0.0f));
+            }
+            break;
+        case 2:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((-inc / 500) + 0.1, 0.0f, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(-0.56f, -0.07f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(0.56f, 0.07f, 0.0f));
+            }
+
+            break;
+        case 3:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 500) + 0.1, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(0.07f, -0.56f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(-0.07f, 0.56f, 0.0f));
+            }
+            break;
+        default:
+            break;
+        }
         transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+        transform = glm::mat4(1.0f);
+        switch (i)
+        {
+        case 0:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((-inc / 500) + 0.1, 0.0f, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(-0.56f, 0.07f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(0.56f, -0.07f, 0.0f));
+            }
+            break;
+        case 1:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 500) + 0.1, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(-0.07f, -0.56f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(0.07f, 0.56f, 0.0f));
+            }
+            break;
+        case 2:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((inc / 500) - 0.1, 0.0f, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(0.56f, -0.07f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(-0.56f, 0.07f, 0.0f));
+            }
+
+            break;
+        case 3:
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 500) - 0.1, 0.0f));
+            }
+            if (state == 2) {
+                transform = glm::translate(transform, glm::vec3(0.07f, 0.56f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(-0.07f, -0.56f, 0.0f));
+            }
+            break;
+        default:
+            break;
+        }
+        transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
         transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-        transform = glm::mat4(1.0f);
+        
     };
 }
 
@@ -572,3 +743,34 @@ void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned in
     glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
 }
 
+void getWater(int vertexColorLocation, unsigned int VAO[], float colores[]) {
+    glBindVertexArray(VAO[8]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+    glBindVertexArray(VAO[5]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+}
+
+void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc) {
+    float angle;
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(-inc / 300, 0.0f, 0.0f)); //por definir hasta 0.0, 0.0
+    transform = glm::translate(transform, glm::vec3(0.0f, -inc / 300, 0.0f));
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[8]);
+    glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[4]);
+    glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[5]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+}

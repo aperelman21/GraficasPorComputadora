@@ -14,11 +14,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void create_circle(float ver[], unsigned int ind[], float r, float x, float y);
 void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
-void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state, float inc);
+void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], int state, float inc);
 void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[]);
 void drawWood(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[]);
-void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc);// settings
-void getWater(int vertexColorLocation, unsigned int VAO[], float colores[]);
+void moveCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc, int state);
+void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc, int state);// settings
+void getWater(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 unsigned int VAO[10], VBO[10], EBO[10];
@@ -405,7 +406,7 @@ int main()
 
     // render loop
     // ----------
-    
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     int vertexColorLocation = glGetUniformLocation(ShaderNormal.ID, "ourColor");
@@ -423,10 +424,10 @@ int main()
         1.0f,1.0f,1.0f,1.0f,
     };
     glm::mat4 trans = glm::mat4(1.0f);
-  
+
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
-        
+
         ftime(&end);
         t2 = end.millitm;
         elapse = t2 - t1;
@@ -441,27 +442,102 @@ int main()
             ShaderNormal.use();
             // render
             // ------
-            if (inc < 33) { //33
-                color_hoja[0] = color_hoja[0] + 0.003;
-                color_agua[2] = color_agua[2] - 0.003;
-            }
-            else if (inc <66){//66
-                color_hoja[1] = color_hoja[1] - 0.003;
-            }
-            else if (inc<100){
-                state = 1;
-                color_hoja[3] = color_hoja[3] - 0.003;
-            }
-            else if (inc < 150) {
-                state = 2;
-                color_hoja[3] = 1.0f;
-            }
-
             drawBackground(vertexColorLocation, transformLoc, VAO);
-            drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
-            drawWood(vertexColorLocation, transformLoc, VAO);
-            drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja,state,inc);
-            //getWater(vertexColorLocation, VAO, color_agua);
+            if (inc < 16.5) { 
+                color_hoja[0] = color_hoja[0] + 0.006;
+                drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 33) {
+                color_hoja[1] = color_hoja[1] - 0.006;
+                drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 50) {
+                state = 1;
+                color_hoja[3] = color_hoja[3] - 0.006;
+                drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 85) {
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc,state);
+            }
+            
+            else if (inc < 120) {
+                color_agua[0] = color_agua[0] - 0.003;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                getWater(vertexColorLocation, transformLoc, VAO, color_agua,state);
+            }
+            else if (inc < 155) {
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveBackCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc,state);
+            }
+            else if (inc < 160) {
+                state = 2;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc,state);
+            }
+            else if (inc < 185) {
+                state = 2;
+                color_hoja[0] = 0.0f;
+                color_hoja[1] = 1.0f;
+                color_hoja[3] = 1.0f;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+                color_agua[0] = color_agua[0] + 0.001;
+                getWater(vertexColorLocation, transformLoc, VAO, color_agua,state);
+            }
+            else if (inc < 195) {
+                state = 3;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveBackCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc, state);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 210) {
+                state = 4;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+                color_agua[0] = color_agua[0] + 0.001;
+                getWater(vertexColorLocation, transformLoc, VAO, color_agua, state);
+            }
+            else if (inc < 220) {
+                state = 5;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveBackCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc, state);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 235) {
+                state = 6;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+                color_agua[0] = color_agua[0] + 0.001;
+                getWater(vertexColorLocation, transformLoc, VAO, color_agua, state);
+            }
+            else if (inc < 245) {
+                state = 7;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                moveBackCircles(vertexColorLocation, transformLoc, VAO, color_agua, inc, state);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+            }
+            else if (inc < 260) {
+                state = 8;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+                color_agua[0] = color_agua[0] + 0.001;
+                getWater(vertexColorLocation, transformLoc, VAO, color_agua, state);
+            }
+            else {
+                state = 0;
+                drawWood(vertexColorLocation, transformLoc, VAO);
+                drawLeafs(vertexColorLocation, transformLoc, VAO, color_hoja, state, inc);
+                drawCircles(vertexColorLocation, transformLoc, VAO, color_agua);
+            }
+            
+            
             // -------------------------------------------------------------------------------
             glfwSwapBuffers(window);
 
@@ -592,7 +668,7 @@ void drawBackground(int vertexColorLocation, unsigned int transformLoc, unsigned
 
 }
 
-void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state, float inc) {
+void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], int state, float inc) {
     float angle;
     glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     glBindVertexArray(VAO[6]);
@@ -604,43 +680,64 @@ void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int 
         switch (i)
         {
         case 0:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3((inc / 500) - 0.1, 0.0f, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
-                transform = glm::translate(transform, glm::vec3(0.56f,0.07f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((inc / 250) - 0.1, 0.0f, 0.0f));
+            }
+            else if (state < 8) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 8) {
+                transform = glm::translate(transform, glm::vec3(0.56f, 0.07f, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 9.8, (inc / 25) - 9.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(-0.56f, -0.07f, 0.0f));
             }
             break;
         case 1:
+            if (state == 0) {
+                break;
+            }
             if (state == 1) {
-                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 500) - 0.1, 0.0f));
+                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 250) - 0.1, 0.0f));
             }
             if (state == 2) {
                 transform = glm::translate(transform, glm::vec3(-0.07f, 0.56f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 6.4, (inc / 25) - 6.4, 0.0f));
                 transform = glm::translate(transform, glm::vec3(0.07f, -0.56f, 0.0f));
             }
             break;
         case 2:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3((-inc / 500) + 0.1, 0.0f, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((-inc / 250) + 0.1, 0.0f, 0.0f));
+            }
+            else if (state < 4) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 4) {
                 transform = glm::translate(transform, glm::vec3(-0.56f, -0.07f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 7.8, (inc / 25) - 7.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(0.56f, 0.07f, 0.0f));
             }
 
             break;
         case 3:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 500) + 0.1, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 250) + 0.1, 0.0f));
+            }
+            else if (state < 6) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 6) {
                 transform = glm::translate(transform, glm::vec3(0.07f, -0.56f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 8.8, (inc / 25) - 8.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(-0.07f, 0.56f, 0.0f));
             }
             break;
@@ -654,43 +751,64 @@ void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int 
         switch (i)
         {
         case 0:
+            if (state == 0) {
+                break;
+            }
             if (state == 1) {
-                transform = glm::translate(transform, glm::vec3((-inc / 500) + 0.1, 0.0f, 0.0f));
+                transform = glm::translate(transform, glm::vec3((-inc / 250) + 0.1, 0.0f, 0.0f));
             }
             if (state == 2) {
                 transform = glm::translate(transform, glm::vec3(-0.56f, 0.07f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 6.4, (inc / 25) - 6.4, 0.0f));
                 transform = glm::translate(transform, glm::vec3(0.56f, -0.07f, 0.0f));
             }
             break;
         case 1:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 500) + 0.1, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (-inc / 250) + 0.1, 0.0f));
+            }
+            else if (state < 4) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 4) {
                 transform = glm::translate(transform, glm::vec3(-0.07f, -0.56f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 7.8, (inc / 25) - 7.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(0.07f, 0.56f, 0.0f));
             }
             break;
         case 2:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3((inc / 500) - 0.1, 0.0f, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3((inc / 250) - 0.1, 0.0f, 0.0f));
+            }
+            else if (state < 6) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 6) {
                 transform = glm::translate(transform, glm::vec3(0.56f, -0.07f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 8.8, (inc / 25) - 8.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(-0.56f, 0.07f, 0.0f));
             }
 
             break;
         case 3:
-            if (state == 1) {
-                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 500) - 0.1, 0.0f));
+            if (state == 0) {
+                break;
             }
-            if (state == 2) {
+            if (state == 1) {
+                transform = glm::translate(transform, glm::vec3(0.0f, (inc / 250) - 0.1, 0.0f));
+            }
+            else if (state < 8) {
+                transform = glm::scale(transform, glm::vec3(0.0f, 0.0f, 0.0f));
+            }
+            if (state == 8) {
                 transform = glm::translate(transform, glm::vec3(0.07f, 0.56f, 0.0f));
-                transform = glm::scale(transform, glm::vec3((inc / 100) - 0.1, (inc / 100) - 0.1, 0.0f));
+                transform = glm::scale(transform, glm::vec3((inc / 25) - 9.8, (inc / 25) - 9.8, 0.0f));
                 transform = glm::translate(transform, glm::vec3(-0.07f, -0.56f, 0.0f));
             }
             break;
@@ -701,7 +819,7 @@ void drawLeafs(int vertexColorLocation, unsigned int transformLoc, unsigned int 
         transform = glm::scale(transform, glm::vec3(-1.0, 1.0, 0.0));
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
         glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
-        
+
     };
 }
 
@@ -739,11 +857,61 @@ void drawCircles(int vertexColorLocation, unsigned int transformLoc, unsigned in
     glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
     glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
     glBindVertexArray(VAO[5]);
-    glUniform4f(vertexColorLocation, 0.3f, 0.51f, 0.6f, 1.0f);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
     glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
 }
 
-void getWater(int vertexColorLocation, unsigned int VAO[], float colores[]) {
+void getWater(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[],int state) {
+
+    glm::mat4 transform = glm::mat4(1.0f);
+    float coordx, coordy,angle;
+    switch (state)
+    {
+    case 1:
+        coordx = 0.7;
+        coordy = 0.7;
+        angle = 0.0;
+        break;
+    case 2: 
+        coordx = -0.1;
+        coordy = 0.1;
+        angle = 90.0;
+        break;
+    case 4:
+        coordx = -0.1;
+        coordy = -0.1;
+        angle = 180.0;
+        break;
+    case 6:
+        coordx = 0.1;
+        coordy = -0.1;
+        angle = 270.0;
+        break;
+    case 8:
+        coordx = 0.1;
+        coordy = 0.1;
+        angle = 0.0;
+        break;
+    default:
+        break;
+    }
+    transform = glm::translate(transform, glm::vec3(coordx, coordy, 0.0f));
+    transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[8]);
+    glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[4]);
+    glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[5]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+
     glBindVertexArray(VAO[8]);
     glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
@@ -753,12 +921,60 @@ void getWater(int vertexColorLocation, unsigned int VAO[], float colores[]) {
     glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
 }
 
-void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc) {
-    float angle;
+void moveBackCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc,int state) {
     glm::mat4 transform = glm::mat4(1.0f);
-    transform = glm::translate(transform, glm::vec3(-inc / 300, 0.0f, 0.0f)); //por definir hasta 0.0, 0.0
-    transform = glm::translate(transform, glm::vec3(0.0f, -inc / 300, 0.0f));
+    float offset = 3.1;
+    float angle = 0.0;
+    switch (state)
+    {
+    case 3:
+        offset = 3.8;
+        transform = glm::translate(transform, glm::vec3(-0.1f, (-inc / 50) + offset, 0.0f));
+        break;
+    case 5:
+        offset = 4.3;
+        transform = glm::translate(transform, glm::vec3((inc / 50) - offset, -0.1f, 0.0f));
+        break;
+    case 7:
+        offset = 4.8;
+        transform = glm::translate(transform, glm::vec3(0.1f, (inc / 50) - offset, 0.0f));
+        break;
+    default:
+        transform = glm::translate(transform, glm::vec3((-inc / 50) + offset, (-inc / 50) + offset, 0.0f));
+        break;
+    }
 
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[8]);
+    glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[4]);
+    glUniform4f(vertexColorLocation, 0.38f, 0.69f, 0.72f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glBindVertexArray(VAO[5]);
+    glUniform4f(vertexColorLocation, colores[0], colores[1], colores[2], colores[3]);
+    glDrawElements(GL_TRIANGLES, 149, GL_UNSIGNED_INT, 0);
+}
+void moveCircles(int vertexColorLocation, unsigned int transformLoc, unsigned int VAO[], float colores[], float inc, int state) {
+    glm::mat4 transform = glm::mat4(1.0f);
+    float offset = 1.0;
+    switch (state)
+    {
+    case 2:
+        offset = 3.1;
+        transform = glm::translate(transform, glm::vec3((-inc / 50) + offset, 0.0f, 0.0f));
+        transform = glm::translate(transform, glm::vec3(0.0f, (inc / 50) - offset, 0.0f));
+        break;
+    default:
+        transform = glm::translate(transform, glm::vec3((inc / 50) - offset, 0.0f, 0.0f));
+        transform = glm::translate(transform, glm::vec3(0.0f, (inc / 50) - offset, 0.0f));
+        break;
+    }
+    
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
     glBindVertexArray(VAO[8]);
     glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);

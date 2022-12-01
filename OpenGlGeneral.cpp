@@ -131,15 +131,41 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
     float planeVertices[] = {
-        // positions          // texture Coords 
-         5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+        // positions          //Normal Vector  // texture Coords 
+         5.0f, -0.5f,  5.0f,  0.0f,0.0f,1.0f,  2.0f, 0.0f,
+        -5.0f, -0.5f,  5.0f,  0.0f,0.0f,1.0f,  0.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f,  0.0f,0.0f,1.0f,  0.0f, 2.0f,
 
-         5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-         5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+         5.0f, -0.5f,  5.0f,  0.0f,0.0f,1.0f,  2.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f,  0.0f,0.0f,1.0f,  0.0f, 2.0f,
+         5.0f, -0.5f, -5.0f,  0.0f,0.0f,1.0f,  2.0f, 2.0f
     };
+
+    float pyramidVertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+        0.0f, 1.0f, 0.0f,  -0.9486832980505138, 0.31622776601683794,0.0f,
+        -0.5f, -0.5f, -0.5f,-0.9486832980505138, 0.31622776601683794,0.0f,
+        -0.5f, -0.5f, 0.5f,-0.9486832980505138, 0.31622776601683794,0.0f,
+
+        0.0f, 1.0f, 0.0f,  0.0f, 0.31622776601683794,  0.9486832980505138,
+        -0.5f, -0.5f, 0.5f,0.0f, 0.31622776601683794,  0.9486832980505138,
+        0.5f, -0.5f, 0.5f,0.0f, 0.31622776601683794,  0.9486832980505138,
+        
+        0.0f, 1.0f, 0.0f,  0.9486832980505138, 0.31622776601683794,0.0f,
+        0.5f, -0.5f, 0.5f,0.9486832980505138, 0.31622776601683794,0.0f,
+        0.5f, -0.5f, -0.5f,0.9486832980505138, 0.31622776601683794,0.0f,
+        
+        0.0f, 1.0f, 0.0f, 0.0f, 0.31622776601683794,  -0.9486832980505138,
+        0.5f, -0.5f, -0.5f,0.0f, 0.31622776601683794,  -0.9486832980505138,
+        -0.5f, -0.5f,-0.5f, 0.0f, 0.31622776601683794,  -0.9486832980505138,
+    };
+
     
     // positions of the point lights
     glm::vec3 pointLightPositions[] = {
@@ -148,6 +174,14 @@ int main()
         glm::vec3(-4.0f,  2.0f, -12.0f),
         glm::vec3(0.0f,  0.0f, -3.0f)
     };
+
+    float vertices_black[] = {
+        5.0f, -0.5f,  5.0f,  0.0f,0.0f,1.0f,
+        -5.0f, -0.5f,  5.0f,  0.0f,0.0f,1.0f,
+        -5.0f, -0.5f, -5.0f,  0.0f,0.0f,1.0f,
+
+    };
+    int indices_black[] = { 0,1,2 };
     // first, configure the cube's VAO (and VBO)
     unsigned int cubeVBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
@@ -163,6 +197,7 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
 
     unsigned int planeVAO, planeVBO;
     glGenVertexArrays(1, &planeVAO);
@@ -170,10 +205,30 @@ int main()
     glBindVertexArray(planeVAO);
     glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), &planeVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
+
+    unsigned int piramydVAO, piramydVBO;
+    glGenVertexArrays(1, &piramydVAO);
+    glGenBuffers(1, &piramydVBO);
+    glBindVertexArray(piramydVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, piramydVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), &pyramidVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+
+  
+
+    
 
     // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
     unsigned int lightCubeVAO;
@@ -217,9 +272,9 @@ int main()
         lightingShader.use();
         lightingShader.setVec3("viewPos", camera.Position);
         lightingShader.setVec3("material.ambient", 0.05f, 0.05f, 0.0f);
-        lightingShader.setVec3("material.diffuse", 0.5f, 0.5f, 0.4f);
-        lightingShader.setVec3("material.specular", 0.7f, 0.7f, 0.04f); // specular lighting doesn't have full effect on this object's material
-        lightingShader.setFloat("material.shininess", 10.0f);
+        lightingShader.setVec3("material.diffuse", 0.5f, 0.5f, 0.04f);
+        lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+        lightingShader.setFloat("material.shininess", 32.0f);
 
         /*
            Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index
@@ -286,12 +341,13 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         lightingShader.setMat4("model", model);
 
-        // render containers
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
 
         glBindVertexArray(planeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glBindVertexArray(piramydVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 18);
         
 
         // also draw the lamp object(s)
